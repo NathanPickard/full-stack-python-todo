@@ -15,13 +15,25 @@ class Todo(db.Model):
     __tablename__ = 'todos'
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=False)
-    completed = db.Column(db.Boolean, nullable=False,)
+    # completed = db.Column(db.Boolean, nullable=False, default=False)
+    completed = db.Column(db.Boolean, default=False)
+    list_id = db.Column(db.Integer, db.ForeignKey(
+        'todolists.id'), nullable=False)
 
     def __repr__(self):
         return f'<Todo {self.id} {self.description}>'
 
 
 # db.create_all()
+
+class TodoList(db.Model):
+    __tablename__ = 'todolists'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    todos = db.relationship('Todo', backref='list', lazy=True)
+
+    def __repr__(self):
+        return f'<TodoList {self.id} {self.description}, list {self.list_id}'
 
 
 @app.route('/todos/create', methods=['POST'])
@@ -75,7 +87,11 @@ def delete_todo(todo_id):
     return jsonify({'success': True})
 
 
+@app.route('/lists/<list_id>')
+def get_list_todos(list_id):
+    # return render_template('index.html', data=Todo.query.all())
+    return render_template('index.html', todos=Todo.query.filter_by(list_id=list_id).order_by('id').all())
+
 @app.route('/')
 def index():
-    # return render_template('index.html', data=Todo.query.all())
-    return render_template('index.html', todos=Todo.query.order_by('id').all())
+  return redirect(url_for('get_list_todos', list_id=1))
